@@ -976,36 +976,89 @@ function omniBack() {
   buildFaceList();
 }
 
-function setupDrag(elId) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  let sx = null, sy = null;
-  const T = 32;
-  el.addEventListener('mousedown', e => { sx = e.clientX; sy = e.clientY; });
-  window.addEventListener('mouseup', e => {
-    if (sx === null) return;
-    const dx = e.clientX - sx, dy = e.clientY - sy; sx = sy = null;
-    if (Math.abs(dx) > T && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? omniNext() : omniPrev(); }
+// ─── UNIVERSAL WATCH DRAG ─────────────────────────────────────────────
+// One global handler: drag anywhere inside either watch container triggers next/prev
+(function() {
+  let sx = null, sy = null, dragging = false;
+  const THRESH = 28;
+
+  // Watch container IDs (big watch + small watch + all their children)
+  const watchIds = [
+    'omni-rim-wrap', 'omni-rim', 'omni-face-big', 'omni-ticks',
+    'omni-rim-wrap-sm', 'omni-rim-sm', 'omni-face-sm',
+    'omni-alien-sm', 'omni-diamond-sm', 'omni-face-list'
+  ];
+
+  function inWatch(el) {
+    // Walk up the DOM — if any ancestor is a watch container, we're in it
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.id && (
+        cur.id === 'omni-rim-wrap' ||
+        cur.id === 'omni-rim-wrap-sm' ||
+        cur.id === 'omni-watch-big' ||
+        cur.id === 'omni-state-watch' ||
+        cur.id === 'omni-state-detail'
+      )) return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+
+  // Set cursor:grab on the whole project section
+  function setWatchCursors() {
+    const sProj = document.getElementById('s-projects');
+    if (sProj) {
+      const rimBig = document.getElementById('omni-rim-wrap');
+      const rimSm  = document.getElementById('omni-rim-wrap-sm');
+      const faceBig = document.getElementById('omni-face-big');
+      const faceSm  = document.getElementById('omni-face-sm');
+      [rimBig, rimSm, faceBig, faceSm].forEach(el => {
+        if (el) el.style.cursor = 'grab';
+      });
+    }
+  }
+  setTimeout(setWatchCursors, 200);
+
+  // Mouse drag
+  document.addEventListener('mousedown', e => {
+    if (!inWatch(e.target)) return;
+    sx = e.clientX; sy = e.clientY; dragging = false;
+    // Change cursor while pressing
+    e.currentTarget && (document.body.style.cursor = 'grabbing');
   });
-  el.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
-  el.addEventListener('touchend', e => {
+  document.addEventListener('mousemove', e => {
     if (sx === null) return;
-    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = sy = null;
-    if (Math.abs(dx) > T && Math.abs(dx) > Math.abs(dy)) { dx < 0 ? omniNext() : omniPrev(); }
+    if (Math.abs(e.clientX - sx) > 5) dragging = true;
   });
-}
+  document.addEventListener('mouseup', e => {
+    if (sx === null) return;
+    document.body.style.cursor = '';
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    sx = sy = null;
+    if (!dragging) return; // just a click
+    if (Math.abs(dx) > THRESH && Math.abs(dx) > Math.abs(dy)) {
+      dx < 0 ? omniNext() : omniPrev();
+    }
+    dragging = false;
+  });
+
+  // Touch drag
+  document.addEventListener('touchstart', e => {
+    if (!inWatch(e.target)) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    sx = sy = null;
+    if (Math.abs(dx) > THRESH && Math.abs(dx) > Math.abs(dy)) {
+      dx < 0 ? omniNext() : omniPrev();
+    }
+  });
+})();
 
 buildFaceList();
-// Drag on outer rims
-setupDrag('omni-rim');
-setupDrag('omni-rim-sm');
-// Drag on inner face (big watch)
-setupDrag('omni-face-big');
-// Drag on inner face (small watch)
-setupDrag('omni-face-sm');
-// Drag on the whole watch container
-setupDrag('omni-rim-wrap');
-setupDrag('omni-rim-wrap-sm');
 
 // ═══ TERMINAL ═══
 const termBody=document.getElementById('term-body');
