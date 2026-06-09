@@ -5,20 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JARVIS // Anmol Mahajan</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;800&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js">
-// ═══ COUNTER ANIMATION ═══════════════════════════════
-function animCounters(){
-  document.querySelectorAll('.stat-n[data-target]').forEach(el=>{
-    const target=parseInt(el.dataset.target);
-    const suffix=el.dataset.suffix||'';
-    let n=0, steps=30;
-    const inc=Math.ceil(target/steps);
-    const t=setInterval(()=>{n=Math.min(n+inc,target);el.textContent=n+suffix;if(n>=target)clearInterval(t);},40);
-  });
-}
-// Run on home load
-setTimeout(animCounters,600);
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -40,14 +27,17 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font-body);ba
 #vignette{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.7)100%);}
 #three-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
 nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;border-bottom:1px solid var(--b);background:rgba(2,12,20,0.92);backdrop-filter:blur(20px);}
-.nav-logo{font-family:var(--font-head);font-size:.95rem;font-weight:800;color:var(--c);letter-spacing:.25em;display:flex;align-items:center;gap:.5rem}
-.nav-logo .dot{color:var(--o);font-size:1.4rem;line-height:0;margin-top:2px}
+.nav-id{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:180px}
+.nav-id-name{font-family:var(--font-head);font-size:.82rem;font-weight:700;color:var(--c);letter-spacing:.18em;text-transform:uppercase}
+.nav-id-role{font-family:var(--font-mono);font-size:.52rem;color:var(--td);letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.nav-id-sep{color:var(--o);margin:0 .3rem}
 .nav-links{display:flex;gap:0;list-style:none}
-.nav-links li a{font-family:var(--font-mono);font-size:.65rem;color:var(--td);text-decoration:none;letter-spacing:.15em;text-transform:uppercase;padding:.4rem .9rem;transition:color .2s,background .2s;display:block;border-right:1px solid var(--b);}
+.nav-links li a{font-family:var(--font-mono);font-size:.62rem;color:var(--td);text-decoration:none;letter-spacing:.12em;text-transform:uppercase;padding:.4rem .85rem;transition:color .2s,background .2s;display:block;border-right:1px solid var(--b);}
 .nav-links li:first-child a{border-left:1px solid var(--b)}
 .nav-links li a:hover,.nav-links li a.active{color:var(--c);background:var(--cb)}
-.nav-status{font-family:var(--font-mono);font-size:.6rem;color:var(--g);display:flex;align-items:center;gap:.4rem;letter-spacing:.1em}
-.nav-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--g);animation:pulse 2s ease infinite}
+.nav-right{display:flex;align-items:center;min-width:140px;justify-content:flex-end}
+.nav-avail{font-family:var(--font-mono);font-size:.56rem;color:var(--g);display:flex;align-items:center;gap:.5rem;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .7rem;border:1px solid rgba(0,255,136,.25);background:rgba(0,255,136,.04)}
+.nav-avail-dot{width:6px;height:6px;border-radius:50%;background:var(--g);animation:pulse 2s ease infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,136,.4)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(0,255,136,0)}}
 #app{position:fixed;inset:0;top:48px;display:flex;overflow:hidden}
 #sidebar{width:200px;min-width:200px;border-right:1px solid var(--b);display:flex;flex-direction:column;background:rgba(5,22,36,.7);backdrop-filter:blur(10px);z-index:10}
@@ -272,7 +262,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
 <canvas id="three-canvas"></canvas>
 
 <nav>
-  <div class="nav-logo">JARVIS<span class="dot">·</span>SYS</div>
+  <!-- Identity block -->
+  <div class="nav-id">
+    <div class="nav-id-name">ANMOL MAHAJAN</div>
+    <div class="nav-id-role">Software Developer <span class="nav-id-sep">·</span> Backend Engineer</div>
+  </div>
+  <!-- Nav links -->
   <ul class="nav-links">
     <li><a href="#" onclick="nav('home');return false" id="nl-home" class="active">HOME</a></li>
     <li><a href="#" onclick="nav('skills');return false" id="nl-skills">SKILLS</a></li>
@@ -282,7 +277,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
     <li><a href="#" onclick="nav('terminal');return false" id="nl-terminal">TERMINAL</a></li>
     <li><a href="#" onclick="nav('contact');return false" id="nl-contact">CONTACT</a></li>
   </ul>
-  <div class="nav-status">SYSTEMS ONLINE</div>
+  <!-- Status -->
+  <div class="nav-right">
+    <div class="nav-avail">
+      <span class="nav-avail-dot"></span>
+      <span>OPEN TO WORK</span>
+    </div>
+  </div>
 </nav>
 
 <div id="app">
@@ -322,7 +323,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
           <div class="hero-tag">Backend Software Engineer</div>
           <h1 class="hero-name"><span class="hi">Anmol</span><br>Mahajan</h1>
           <div class="hero-role">// Performance · Scale · Distributed Systems</div>
-          <p class="hero-bio">Backend engineer focused on <strong>performance improvements</strong> and <strong>scalable distributed workflows</strong>. Reduced API latency by <strong>76%</strong> and cut message queue overhead by <strong>40%</strong> at Allen Digital — serving 10,000+ daily active users.</p>
+          <p class="hero-bio">I build backend systems that <strong>scale under pressure and stay fast</strong>. At Allen Digital I didn't just write features — I found the bottlenecks, redesigned the pipelines, and made systems measurably better for real users. I bring the same mindset to every codebase: <strong>own the performance, eliminate the waste, ship things that work</strong>. If your team needs someone who digs into the hard problems and comes back with solutions that stick — I'm that engineer.</p>
           <div class="hero-stats">
             <div class="stat-b"><div class="stat-n" data-target="76" data-suffix="%">76%</div><div class="stat-l">Latency Cut</div></div>
             <div class="stat-b"><div class="stat-n" data-target="40" data-suffix="%">40%</div><div class="stat-l">Queue Overhead ↓</div></div>
@@ -336,8 +337,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
           </div>
         </div>
         <div class="hud-panel">
-          <div class="ph"><span>SYSTEM PROFILE v3.0</span><span class="blink-dot"></span></div>
-          <div class="pr"><span class="pk">DESIGNATION</span><span class="pv c">SDE Intern</span></div>
+          <div class="ph"><span>SYSTEM PROFILE // SOFTWARE DEVELOPER</span><span class="blink-dot"></span></div>
+          <div class="pr"><span class="pk">ROLE</span><span class="pv c">SDE Intern</span></div>
           <div class="pr"><span class="pk">COMPANY</span><span class="pv o">Allen Digital</span></div>
           <div class="pr"><span class="pk">UNIVERSITY</span><span class="pv">GNDU Amritsar</span></div>
           <div class="pr"><span class="pk">BATCH</span><span class="pv">2023 – 2027</span></div>
@@ -400,6 +401,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
           <div class="edu-card-header"><div class="edu-card-dot" style="background:#ff6b35"></div><div class="edu-card-year">Completed 2023</div></div>
           <div class="edu-card-name">Class 12th — PCM</div>
           <div class="edu-card-inst" style="color:#ff6b35">Shivalik Sr. Sec. School, Nurpur</div>
+          <div style="font-family:var(--font-mono);font-size:.54rem;color:#ff6b35;opacity:.6;letter-spacing:.12em;margin-top:-.35rem;margin-bottom:.3rem">HPBOSE</div>
           <div style="margin-top:.7rem;display:flex;align-items:baseline;gap:.5rem"><div class="edu-card-grade" style="color:#ff6b35">92.8%</div><div class="edu-card-label">Percentage</div></div>
         </div>
         <div class="edu-entry-card">
@@ -407,6 +409,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
           <div class="edu-card-header"><div class="edu-card-dot" style="background:#00ff88"></div><div class="edu-card-year">Completed 2021</div></div>
           <div class="edu-card-name">Class 10th</div>
           <div class="edu-card-inst" style="color:#00ff88">MCM DAV Sr. Sec. School Baghni, Nurpur</div>
+          <div style="font-family:var(--font-mono);font-size:.54rem;color:#00ff88;opacity:.6;letter-spacing:.12em;margin-top:-.35rem;margin-bottom:.3rem">CBSE</div>
           <div style="margin-top:.7rem;display:flex;align-items:baseline;gap:.5rem"><div class="edu-card-grade" style="color:#00ff88">95.8%</div><div class="edu-card-label">Percentage</div></div>
         </div>
       </div>
@@ -422,11 +425,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
           <div class="exp-role">Software Development Engineer Intern</div>
           <div class="exp-co">Allen Digital · Content &amp; Delivery Team · Bangalore, India</div>
           <ul class="exp-list">
-            <li>Streamlined the meeting scheduling API end-to-end, cutting response latency from 850ms to <strong>200ms (76% reduction)</strong> under 500+ concurrent requests via profiling hot paths and targeted Redis caching.</li>
-            <li>Redesigned the pre-session data pipeline for over <strong>10,000 daily active users</strong>, reducing page load time by 35% through selective fetching and Redis-backed caching.</li>
-            <li>Eliminated 3 redundant message queue call patterns across join, leave, and resource flows, cutting queue overhead by <strong>40%</strong> and lowering infrastructure cost.</li>
-            <li>Introduced stream-wise filtering and flag-based routing across 8+ API paths, reducing irrelevant push notification delivery by <strong>60%</strong>.</li>
-            <li>Refactored the Join Meeting workflow in a microservice handling over <strong>1 million monthly events</strong>, removing 200+ lines of dead code and improving maintainability.</li>
+            <li>Profiled and redesigned the meeting scheduling API end-to-end — identified cache misses and N+1 query patterns as primary bottlenecks, introduced targeted <strong>Redis caching layers</strong>, cutting response latency from <strong>850ms → 200ms (76% reduction)</strong> under 500+ concurrent requests without any infrastructure scaling.</li>
+            <li>Rebuilt the pre-session data pipeline serving <strong>10,000+ daily active users</strong> — replaced bulk fetches with selective field loading and Redis-backed response caching, reducing page load time by <strong>35%</strong> and decreasing database read pressure significantly.</li>
+            <li>Audited message queue usage across join, leave, and resource release flows — eliminated 3 redundant publish patterns that were firing on every event regardless of state, cutting total queue overhead by <strong>40%</strong> and reducing monthly infrastructure cost without changing any user-facing behavior.</li>
+            <li>Introduced stream-wise filtering and flag-based routing across <strong>8+ API paths</strong> in the notification delivery system — ensured push notifications were only dispatched when contextually relevant, reducing irrelevant delivery by <strong>60%</strong> and improving user experience metrics.</li>
+            <li>Refactored the Join Meeting microservice workflow that processes <strong>1M+ monthly events</strong> — removed 200+ lines of dead conditional paths and redundant state checks, improving code maintainability and reducing the average cognitive load for future changes to this critical service.</li>
           </ul>
         </div>
       </div>
@@ -467,6 +470,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
         <div class="omni-split">
           <!-- left: small watch (rim rotates, face stays) -->
           <div class="omni-split-left">
+            <button class="omni-back-btn" onclick="omniBack()">← ALL PROJECTS</button>
             <div class="omni-rim-wrap-sm" id="omni-rim-wrap-sm">
               <div class="omni-rim-sm" id="omni-rim-sm">
                 <div class="omni-dot omni-dot-sm omni-dot-tl"></div>
@@ -482,7 +486,6 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
             </div>
             <div class="omni-counter-sm" id="omni-counter-sm">01 / 04</div>
             <div class="omni-drag-hint">DRAG ↔ OR TAP NEXT</div>
-            <button class="omni-back-btn" onclick="omniBack()">← ALL PROJECTS</button>
           </div>
           <!-- right: project detail -->
           <div class="omni-split-right" id="omni-split-right">
@@ -993,8 +996,16 @@ function setupDrag(elId) {
 }
 
 buildFaceList();
+// Drag on outer rims
 setupDrag('omni-rim');
 setupDrag('omni-rim-sm');
+// Drag on inner face (big watch)
+setupDrag('omni-face-big');
+// Drag on inner face (small watch)
+setupDrag('omni-face-sm');
+// Drag on the whole watch container
+setupDrag('omni-rim-wrap');
+setupDrag('omni-rim-wrap-sm');
 
 // ═══ TERMINAL ═══
 const termBody=document.getElementById('term-body');
@@ -1032,8 +1043,8 @@ Status    : <span class="tg">OPEN TO OPPORTUNITIES 🟢</span></div>`,
 
 <span class="th">EDUCATION</span>
   B.Tech CSE — GNDU Amritsar (7.93 CGPA)
-  Class 12 — Shivalik Sr. Sec. School, Nurpur (92.8%)
-  Class 10 — MCM DAV Sr. Sec. School Baghni, Nurpur (95.8%)</div>`,
+  Class 12 — Shivalik Sr. Sec. School, Nurpur — HPBOSE (92.8%)
+  Class 10 — MCM DAV Sr. Sec. School Baghni, Nurpur — CBSE (95.8%)</div>`,
   skills:()=>`<div class="to"><span class="ti">LANGUAGES</span>  Java · Go · C++ · SQL
 <span class="ti">BACKEND</span>    Spring Boot · REST APIs · WebSockets · Microservices · Kafka
 <span class="ti">DATABASES</span>  PostgreSQL · Redis · MySQL · Firebase
@@ -1060,10 +1071,10 @@ Content & Delivery Team · Bangalore, India
   education:()=>`<div class="to"><span class="th">B.Tech CSE (2023–2027)</span>
   Guru Nanak Dev University, Amritsar — CGPA: <span class="tg">7.93/10</span>
 
-<span class="th">Class 12th — Shivalik Sr. Sec. School, Nurpur</span>
+<span class="th">Class 12th — Shivalik Sr. Sec. School, Nurpur (HPBOSE)</span>
   Score: <span class="tg">92.8%</span>
 
-<span class="th">Class 10th — MCM DAV Sr. Sec. School Baghni, Nurpur</span>
+<span class="th">Class 10th — MCM DAV Sr. Sec. School Baghni, Nurpur (CBSE)</span>
   Score: <span class="tg">95.8%</span></div>`,
   'sudo hire':()=>`<div class="to"><span class="tg">[ INITIATING HIRE SEQUENCE... ]</span>
 
