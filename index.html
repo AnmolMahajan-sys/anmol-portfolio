@@ -219,8 +219,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
 .term-body{flex:1;background:#050f18;padding:1rem 1.2rem;overflow-y:auto;font-family:var(--font-mono);font-size:.8rem;line-height:1.7}
 .tl{margin-bottom:2px}
 .tp{color:#30d158}.tc{color:#e0e0e0}.to{color:#aaa;white-space:pre-wrap}.te{color:#ff453a}.ti{color:var(--c)}.th{color:#ffd60a}.tg{color:#30d158}
-.term-input-row{background:#050f18;padding:.5rem 1.2rem 1rem;border-top:1px solid rgba(0,212,255,.08);display:flex;align-items:center;gap:.3rem;font-family:var(--font-mono);font-size:.8rem}
-#term-input{background:transparent;border:none;outline:none;color:#e0e0e0;flex:1;font-family:inherit;font-size:inherit;caret-color:#30d158}
+/* term-input-row removed — input is now invisible, embedded in body */
+#term-input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.term-cursor{display:inline-block;width:8px;height:1em;background:#30d158;vertical-align:text-bottom;margin-left:1px;animation:cur-blink .8s step-end infinite}
+@keyframes cur-blink{0%,100%{opacity:1}50%{opacity:0}}
+.term-prompt-line{display:flex;align-items:baseline;gap:0;flex-wrap:wrap}
+.term-prompt-text{white-space:pre}
 /* CONTACT */
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
 .contact-pallets{display:flex;flex-direction:column;gap:.8rem}
@@ -510,10 +514,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:48px;display:flex;ali
           <div class="term-dot" style="background:#28c840"></div>
           <div class="term-title">visitor@jarvis ~ — ANMOL MAHAJAN TERMINAL v3.0</div>
         </div>
-        <div class="term-body" id="term-body"></div>
-        <div class="term-input-row">
-          <span class="tp">visitor@jarvis</span><span class="to"> ~ % </span>
-          <input id="term-input" type="text" autocomplete="off" spellcheck="false" placeholder="type a command...">
+        <!-- Single scrollable body — input lives as last line inside here -->
+        <div class="term-body" id="term-body" onclick="document.getElementById('term-input').focus()">
+          <!-- Hidden real input captures keystrokes -->
+          <input id="term-input" type="text" autocomplete="off" spellcheck="false"
+            style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:0">
         </div>
       </div>
     </div>
@@ -1061,11 +1066,15 @@ function omniBack() {
 buildFaceList();
 
 // ═══ TERMINAL ═══
-const termBody=document.getElementById('term-body');
-const termInput=document.getElementById('term-input');
-let termHistory=[],termHistIdx=-1;
-const termCmds={
-  help:()=>`<div class="to">Available commands:
+// ═══ TERMINAL ════════════════════════════════════════════════════════
+const termBody  = document.getElementById('term-body');
+const termInput = document.getElementById('term-input');
+let termHistory = [], termHistIdx = -1;
+let termCurrentLine = ''; // what user has typed on current prompt line
+let termPromptEl = null;  // the live prompt DOM element
+
+const termCmds = {
+  help: () => `<div class="to">Available commands:
 <span class="th">whoami</span>      — About me
 <span class="th">cat resume</span>  — Resume summary
 <span class="th">skills</span>      — Tech skills
@@ -1075,13 +1084,13 @@ const termCmds={
 <span class="th">education</span>   — Academic record
 <span class="th">sudo hire</span>   — Why hire me
 <span class="th">clear</span>       — Clear terminal</div>`,
-  whoami:()=>`<div class="to"><span class="ti">Anmol Mahajan</span> — Backend Software Engineer
+  whoami: () => `<div class="to"><span class="ti">Anmol Mahajan</span> — Backend Software Engineer
 Location  : Nurpur, HP, India
 University: GNDU Amritsar (B.Tech CSE, 2023-27)
 CGPA      : <span class="th">7.93 / 10</span>
 Focus     : Distributed systems · Caching · Microservices
 Status    : <span class="tg">OPEN TO OPPORTUNITIES 🟢</span></div>`,
-  'cat resume':()=>`<div class="to"><span class="ti">═══ ANMOL MAHAJAN — RESUME SUMMARY ═══</span>
+  'cat resume': () => `<div class="to"><span class="ti">═══ ANMOL MAHAJAN — RESUME SUMMARY ═══</span>
 
 <span class="th">EXPERIENCE</span>
   Allen Digital (Jun–Aug 2025) — SDE Intern
@@ -1098,11 +1107,11 @@ Status    : <span class="tg">OPEN TO OPPORTUNITIES 🟢</span></div>`,
   B.Tech CSE — GNDU Amritsar (7.93 CGPA)
   Class 12 — Shivalik Sr. Sec. School, Nurpur — HPBOSE (92.8%)
   Class 10 — MCM DAV Sr. Sec. School Baghni, Nurpur — CBSE (95.8%)</div>`,
-  skills:()=>`<div class="to"><span class="ti">LANGUAGES</span>  Java · Go · C++ · SQL
+  skills: () => `<div class="to"><span class="ti">LANGUAGES</span>  Java · Go · C++ · SQL
 <span class="ti">BACKEND</span>    Spring Boot · REST APIs · WebSockets · Microservices · Kafka
 <span class="ti">DATABASES</span>  PostgreSQL · Redis · MySQL · Firebase
 <span class="ti">TOOLS</span>      Docker · Git · Linux · Render · JWT/OAuth2</div>`,
-  projects:()=>`<div class="to">1. <span class="th">TT Platform</span>        Spring Boot · PostgreSQL · WebSockets · Firebase
+  projects: () => `<div class="to">1. <span class="th">TT Platform</span>        Spring Boot · PostgreSQL · WebSockets · Firebase
    → Real-time tournament app <span class="tg">LIVE on Android</span>
 
 2. <span class="th">Gopherflow</span>        Spring Boot · Kafka · Redis · PostgreSQL · Python
@@ -1110,18 +1119,18 @@ Status    : <span class="tg">OPEN TO OPPORTUNITIES 🟢</span></div>`,
 
 3. <span class="th">Library Manager</span>   Java · Servlets · JSP · MySQL
 4. <span class="th">Smart Health App</span>  Java · MySQL · MVC</div>`,
-  experience:()=>`<div class="to"><span class="th">Allen Digital</span> — SDE Intern (Jun–Aug 2025)
+  experience: () => `<div class="to"><span class="th">Allen Digital</span> — SDE Intern (Jun–Aug 2025)
 Content & Delivery Team · Bangalore, India
 
 ▸ API latency  : 850ms → <span class="tg">200ms</span> (76%↓)
 ▸ Page load    : <span class="tg">35%</span> faster · 10,000+ daily users
 ▸ Queue        : <span class="tg">40%</span> overhead cut
 ▸ Microservice : <span class="tg">1M+</span> monthly events</div>`,
-  contact:()=>`<div class="to"><span class="ti">EMAIL</span>    mahajn1608@gmail.com
+  contact: () => `<div class="to"><span class="ti">EMAIL</span>    mahajn1608@gmail.com
 <span class="ti">PHONE</span>    +91-9015438089
 <span class="ti">GITHUB</span>   github.com/AnmolMahajan-sys
 <span class="ti">LINKEDIN</span> linkedin.com/in/anmol-m-761762308</div>`,
-  education:()=>`<div class="to"><span class="th">B.Tech CSE (2023–2027)</span>
+  education: () => `<div class="to"><span class="th">B.Tech CSE (2023–2027)</span>
   Guru Nanak Dev University, Amritsar — CGPA: <span class="tg">7.93/10</span>
 
 <span class="th">Class 12th — Shivalik Sr. Sec. School, Nurpur (HPBOSE)</span>
@@ -1129,7 +1138,7 @@ Content & Delivery Team · Bangalore, India
 
 <span class="th">Class 10th — MCM DAV Sr. Sec. School Baghni, Nurpur (CBSE)</span>
   Score: <span class="tg">95.8%</span></div>`,
-  'sudo hire':()=>`<div class="to"><span class="tg">[ INITIATING HIRE SEQUENCE... ]</span>
+  'sudo hire': () => `<div class="to"><span class="tg">[ INITIATING HIRE SEQUENCE... ]</span>
 
 ✓ 76% API latency reduction — <span class="th">PROVEN</span>
 ✓ 40% queue overhead cut — <span class="th">DELIVERED</span>
@@ -1139,30 +1148,110 @@ Content & Delivery Team · Bangalore, India
 
 <span class="tg">VERDICT: HIRE IMMEDIATELY</span>
 → mahajn1608@gmail.com</div>`,
-  clear:()=>'__clear__'
+  clear: () => '__clear__'
 };
-function termLine(html){const d=document.createElement('div');d.className='tl';d.innerHTML=html;termBody.appendChild(d);termBody.scrollTop=termBody.scrollHeight;}
-function termPrompt(){termLine('<span class="tp">visitor@jarvis</span><span class="to"> ~ % </span>');}
-(function(){
-  const lines=['<span class="ti">JARVIS PORTFOLIO TERMINAL v3.0</span>','<span class="to">Initializing backend systems...</span>','<span class="tg">[ OK ] Redis cache warm</span>','<span class="tg">[ OK ] Spring Boot context loaded</span>','<span class="to">Type <span class="th">help</span> for commands.</span>',''];
-  let i=0;function next(){if(i<lines.length){termLine(lines[i++]);setTimeout(next,80);}else termPrompt();}
-  setTimeout(next,200);
+
+// ── Output a static line (not the live prompt) ────────────────────────
+function termLine(content) {
+  // Remove old live prompt before adding static line
+  if (termPromptEl && termPromptEl.parentNode) termPromptEl.remove();
+  const d = document.createElement('div');
+  d.className = 'tl';
+  d.innerHTML = content;
+  termBody.appendChild(d);
+  termBody.scrollTop = termBody.scrollHeight;
+}
+
+// ── Render the live interactive prompt as the last line ───────────────
+function termPrompt() {
+  if (termPromptEl && termPromptEl.parentNode) termPromptEl.remove();
+  termCurrentLine = '';
+  const row = document.createElement('div');
+  row.className = 'tl term-prompt-line';
+  row.innerHTML =
+    '<span class="tp">visitor@jarvis</span>' +
+    '<span class="to term-prompt-text"> ~ % </span>' +
+    '<span id="term-typed" class="tc term-prompt-text"></span>' +
+    '<span class="term-cursor"></span>';
+  termBody.appendChild(row);
+  termPromptEl = row;
+  termBody.scrollTop = termBody.scrollHeight;
+  termInput.focus();
+}
+
+// ── Update the visible typed text on the live prompt ──────────────────
+function termUpdateDisplay() {
+  const typed = document.getElementById('term-typed');
+  if (typed) typed.textContent = termCurrentLine;
+  termBody.scrollTop = termBody.scrollHeight;
+}
+
+// ── Boot sequence ─────────────────────────────────────────────────────
+(function() {
+  const lines = [
+    '<span class="ti">JARVIS PORTFOLIO TERMINAL v3.0</span>',
+    '<span class="to">Initializing backend systems...</span>',
+    '<span class="tg">[ OK ] Redis cache warm</span>',
+    '<span class="tg">[ OK ] Spring Boot context loaded</span>',
+    '<span class="to">Type <span class="th">help</span> for commands.</span>'
+  ];
+  let i = 0;
+  function next() {
+    if (i < lines.length) { termLine(lines[i++]); setTimeout(next, 90); }
+    else termPrompt();
+  }
+  setTimeout(next, 200);
 })();
-termInput.addEventListener('keydown',e=>{
-  if(e.key==='ArrowUp'){e.preventDefault();if(termHistIdx<termHistory.length-1){termHistIdx++;termInput.value=termHistory[termHistIdx];}}
-  else if(e.key==='ArrowDown'){e.preventDefault();if(termHistIdx>0){termHistIdx--;termInput.value=termHistory[termHistIdx];}else{termHistIdx=-1;termInput.value='';}}
-  else if(e.key==='Enter'){
-    const raw=termInput.value.trim();if(!raw)return;
-    termHistory.unshift(raw);termHistIdx=-1;
-    const cmd=raw.toLowerCase();termInput.value='';
-    termLine(`<span class="tp">visitor@jarvis</span><span class="to"> ~ % </span><span class="tc">${raw}</span>`);
-    if(cmd==='clear'){termBody.innerHTML='';termPrompt();return;}
-    const fn=termCmds[cmd];
-    if(fn)termLine(fn());
-    else termLine(`<span class="te">command not found: ${raw}</span><span class="to"> — try 'help'</span>`);
-    termPrompt();termBody.scrollTop=termBody.scrollHeight;
+
+// ── Focus input whenever terminal section is clicked ──────────────────
+termBody.addEventListener('click', () => termInput.focus());
+
+// ── Keyboard handler — routes to hidden input ─────────────────────────
+termInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (termHistIdx < termHistory.length - 1) {
+      termHistIdx++;
+      termCurrentLine = termHistory[termHistIdx];
+      termUpdateDisplay();
+    }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (termHistIdx > 0) { termHistIdx--; termCurrentLine = termHistory[termHistIdx]; }
+    else { termHistIdx = -1; termCurrentLine = ''; }
+    termUpdateDisplay();
+  } else if (e.key === 'Backspace') {
+    e.preventDefault();
+    termCurrentLine = termCurrentLine.slice(0, -1);
+    termUpdateDisplay();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const raw = termCurrentLine.trim();
+    // Echo the command as a frozen line
+    termLine(
+      '<span class="tp">visitor@jarvis</span>' +
+      '<span class="to"> ~ % </span>' +
+      '<span class="tc">' + raw + '</span>'
+    );
+    termCurrentLine = '';
+    if (!raw) { termPrompt(); return; }
+    termHistory.unshift(raw); termHistIdx = -1;
+    const cmd = raw.toLowerCase();
+    if (cmd === 'clear') { termBody.innerHTML = ''; termPromptEl = null; termPrompt(); return; }
+    const fn = termCmds[cmd];
+    if (fn) termLine(fn());
+    else termLine('<span class="te">command not found: ' + raw + '</span><span class="to"> — try \'help\'</span>');
+    termPrompt();
+  } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+    // Printable character
+    e.preventDefault();
+    termCurrentLine += e.key;
+    termUpdateDisplay();
   }
 });
+
+// Auto-focus when switching to terminal section
+const _navOrig = typeof _origNav !== 'undefined' ? _origNav : null;
 
 // ═══ CHAT ═══
 let chatState='ask_name',visitorName='';
